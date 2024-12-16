@@ -1,0 +1,75 @@
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command:
+      - uvicorn
+      - app.main:main_app
+      - --host
+      - ${HOST:-0.0.0.0}
+      - --port
+      - ${APP_PORT:-8000}
+      - --reload
+    ports:
+      - "${HOST_PORT:-8000}:${APP_PORT:-8000}"
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    networks:
+      - network
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: postgres:latest
+    ports:
+      - "${HOST_DB_PORT:-5433}:${CONTAINER_DB_PORT:-5432}"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-library}
+      - POSTGRES_USER=${POSTGRES_USER:-admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-admin}
+      - TZ=${TZ:-Europe/Moscow}
+    networks:
+      - network
+
+  testdb:
+    container_name: testdb
+    image: postgres:latest
+    ports:
+      - "${HOST_DB_PORT_TEST:-5434}:${CONTAINER_DB_PORT_TEST:-5432}"
+    environment:
+      - POSTGRES_DB=librarytest
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - TZ=${TZ:-Europe/Moscow}
+    networks:
+      - network
+
+  testapp:
+    container_name: testapp
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    volumes:
+      - ./app:/app
+      - ./tests:/tests
+      - ./pyproject.toml:/pyproject.toml
+    working_dir: /
+    command:
+      - python
+      - tests/while.py
+    networks:
+      - network
+    depends_on:
+      - testdb
+      - app
+
+networks:
+  network:
+    name: network
+    driver: bridge
