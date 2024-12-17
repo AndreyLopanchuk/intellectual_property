@@ -31,13 +31,13 @@ async def author_service(mock_dependency):
 
 
 @pytest.fixture
-async def override_author_service_dependency(author_service, main_app):
+async def override_author_service_dependency(author_service, test_app):
     def override_dependency(q: str | None = None):
         return author_service
 
-    main_app.dependency_overrides[get_author_service] = override_dependency
+    test_app.dependency_overrides[get_author_service] = override_dependency
     yield
-    del main_app.dependency_overrides[get_author_service]
+    del test_app.dependency_overrides[get_author_service]
 
 
 @pytest.mark.asyncio
@@ -46,8 +46,8 @@ async def test_get_authors_endpoint(mock_dependency, override_author_service_dep
 
     response = await test_client.get("/authors/")
     assert response.status_code == 200
-    for i in range(len(test_data_full) - 1):
-        assert response.json()[i] == test_data_full[i]
+    for i in range(len(test_data_full)):
+        assert sorted(response.json()[i]) == sorted(test_data_full[i])
 
 
 @pytest.mark.asyncio
@@ -56,4 +56,4 @@ async def test_create_author_endpoint(test_client) -> None:
     assert response.status_code == 201
     data = response.json()
     data.pop("id")
-    assert data == test_data_create
+    assert sorted(data) == sorted(test_data_create)

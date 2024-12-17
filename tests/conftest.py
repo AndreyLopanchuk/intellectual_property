@@ -29,21 +29,21 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture(scope="function")
-async def main_app() -> FastAPI:
+async def test_app() -> FastAPI:
     app = FastAPI()
     app.dependency_overrides[db.session_getter] = override_get_async_session
     app.include_router(router=authors_router, prefix="/authors")
     app.include_router(router=books_router, prefix="/books")
     app.include_router(router=borrows_router, prefix="/borrows")
-    return app
+    yield app
 
 
 @pytest.fixture(scope="function")
-async def test_client(main_app) -> AsyncGenerator[AsyncClient, None]:
+async def test_client(test_app) -> AsyncGenerator[AsyncClient, None]:
     """
     Фикстура создает тестовый клиент
     """
-    transport = ASGITransport(app=main_app)
+    transport = ASGITransport(app=test_app)
     async with AsyncClient(transport=transport, base_url="http://test") as async_client:
         yield async_client
 
