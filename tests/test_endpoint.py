@@ -6,13 +6,6 @@ import pytest
 from app.api.authors.dependencies import get_author_service
 
 
-""" в среду добавлю тестов 
-    это не окончательный вариант, разбирался как работает
-    тестирование методов класса через depends зависимость,
-    поэтому всё привязано к тесту. сделаю более динамическими. 
-"""
-
-
 test_data_create = {"first_name": "й1", "last_name": "st3", "birth_date": "2024-12-16"}
 test_data_full = [
     {"id": 1, "first_name": "Иван2", "last_name": "asdas", "birth_date": datetime.date(2024, 12, 16)},
