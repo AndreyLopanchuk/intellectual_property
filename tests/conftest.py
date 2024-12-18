@@ -1,7 +1,9 @@
+import os
 from typing import AsyncGenerator
 
 import pytest
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -12,8 +14,11 @@ from app.api.borrows.routes import router as borrows_router
 from app.database.db import db
 from app.models.base import Base
 
-DATABASE_URL_TEST: str = "postgresql+asyncpg://admin:admin@testdb/librarytest"
 
+if "HOSTNAME" in os.environ:
+    DATABASE_URL_TEST: str = "postgresql+asyncpg://admin:admin@testdb/librarytest"
+else:
+    DATABASE_URL_TEST: str = "postgresql+asyncpg://admin:admin@localhost:5434/librarytest"
 
 test_engine = create_async_engine(DATABASE_URL_TEST, poolclass=NullPool)
 
@@ -30,7 +35,7 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture(scope="function")
 async def test_app() -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(default_response_class=ORJSONResponse)
     app.dependency_overrides[db.session_getter] = override_get_async_session
     app.include_router(router=authors_router, prefix="/authors")
     app.include_router(router=books_router, prefix="/books")
